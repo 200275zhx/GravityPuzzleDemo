@@ -4,6 +4,12 @@
 
 This project ships two gravity-well bullets (black- and white-hole) you can tune directly in Blueprint. The main numbers live in each bullet Blueprint under the **Gravity Well Numerical** section of the Details panel.
 
+## Open project
+
+To open Editor: Run **"Run_Editor.bat"**
+To open sln: Run **"Run_Code.bat"**
+These bats automatically generate project files and open editor and sln afterwards.
+
 ## Change strength and radius in the bullet Blueprints
 
 Black-hole bullet (fires on left click):
