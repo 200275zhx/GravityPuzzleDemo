@@ -28,6 +28,7 @@ Saved/
 *.user
 *.userprefs
 *.rsuser
+*.cfg
 
 # UE Temp Ignore
 */Intermediate/*
