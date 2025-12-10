@@ -11,6 +11,8 @@ Saved/
 *.VC.db
 *.VC.opendb
 *.sln.DotSettings
+*.sln
+*.opensdf
 
 # Compiled objects and caches
 *.ipch
@@ -27,9 +29,15 @@ Saved/
 *.userprefs
 *.rsuser
 
+# UE Temp Ignore
+*/Intermediate/*
+*/Binaries/*
+
 # OS
 .DS_Store
 *.dSYM/
+*.xcodeproj
+*.xcworkspace
 
 # Unreal external actor/object caches
 Content/Collections/
