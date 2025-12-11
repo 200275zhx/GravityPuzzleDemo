@@ -42,11 +42,21 @@ public:
 	UFUNCTION(BlueprintPure, Category="Gravity Well")
 	bool IsWhiteHoleActive() const { return bBlackHoleActive && bIsWhiteHole; }
 
+	/** New: Toggle black/white hole */
+	UFUNCTION(BlueprintCallable, Category = "Gravity Well")
+	void TogglePolarity();
+
+	/** New: Set polarity */
+	void SetPolarity(bool bMakeWhite);
+
 	/** Broadcast when the projectile successfully activates the gravity well. */
 	FGravityWellProjectileActivatedSignature OnBlackHoleActivated;
 
 	/** Broadcast when the projectile removes the gravity well (or is destroyed). */
 	FGravityWellProjectileDeactivatedSignature OnBlackHoleDeactivated;
+
+	/** New: Set"Pending Polarity" into polarity it's becoming*/
+	void SetPendingPolarity(bool bWillBeWhite) { bPendingWhiteHole = bWillBeWhite; }
 
 protected:
 	/** Class of gravity well actor to spawn on first activation (black hole). */
@@ -88,4 +98,7 @@ private:
 
 	/** Pointer to the spawned gravity well actor, if any. */
 	TWeakObjectPtr<AGravityWellActor> ActiveWell;
+
+	/** New: Record black/white hole status when activated*/
+	bool bPendingWhiteHole = false;
 };

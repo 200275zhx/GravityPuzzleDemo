@@ -1,4 +1,4 @@
-#include "GravityWellProjectile.h"
+﻿#include "GravityWellProjectile.h"
 
 #include "GravityWellActor.h"
 #include "WhiteHoleActor.h"
@@ -70,8 +70,10 @@ void AGravityWellProjectile::ActivateBlackHole()
 	}
 
 	bBlackHoleActive = true;
-	bIsWhiteHole = false;
+	//bIsWhiteHole = false;
 	bHit = true;
+	// === Change 1：Set Polarity by pending status ===
+	bIsWhiteHole = bPendingWhiteHole;
 
 	// Stop any further movement or collision.
 	if (ProjectileMovement)
@@ -157,10 +159,14 @@ void AGravityWellProjectile::SpawnGravityWell()
 		return;
 	}
 
-	if (!GravityWellClass)
+	/*if (!GravityWellClass)
 	{
 		return;
 	}
+	*/
+	TSubclassOf<AGravityWellActor> ClassToSpawn = bIsWhiteHole ? WhiteHoleClass : GravityWellClass;
+
+	if (!ClassToSpawn) return;
 
 	const FTransform SpawnTransform = FTransform(GetActorRotation(), GetActorLocation() + WellSpawnOffset);
 
@@ -169,7 +175,7 @@ void AGravityWellProjectile::SpawnGravityWell()
 	SpawnParams.Instigator = GetInstigator();
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-	if (AGravityWellActor* Well = GetWorld()->SpawnActor<AGravityWellActor>(GravityWellClass, SpawnTransform, SpawnParams))
+	if (AGravityWellActor* Well = GetWorld()->SpawnActor<AGravityWellActor>(ClassToSpawn, SpawnTransform, SpawnParams))
 	{
 		ActiveWell = Well;
 		Well->AttachToActor(this, FAttachmentTransformRules::KeepWorldTransform);
@@ -216,3 +222,42 @@ void AGravityWellProjectile::HandleWellDestroyed(AActor* DestroyedActor)
 			BP_OnBlackHoleDeactivated();
 		}
 	}
+
+void AGravityWellProjectile::TogglePolarity()
+{
+	if (!bBlackHoleActive)
+	{
+		return;
+	}
+
+	SetPolarity(!bIsWhiteHole);
+}
+
+void AGravityWellProjectile::SetPolarity(bool bMakeWhite)
+{
+	if (!bBlackHoleActive) return;
+	if (bIsWhiteHole == bMakeWhite) return;
+
+	DestroyGravityWell();
+
+	TSubclassOf<AGravityWellActor> ClassToSpawn = bMakeWhite ? WhiteHoleClass : GravityWellClass;
+
+	if (!ClassToSpawn) return;
+	if (!ensure(GetWorld())) return;
+
+	const FTransform SpawnTransform = FTransform(GetActorRotation(), GetActorLocation() + WellSpawnOffset);
+
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.Owner = this;
+	SpawnParams.Instigator = GetInstigator();
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+	if (AGravityWellActor* Well = GetWorld()->SpawnActor<AGravityWellActor>(ClassToSpawn, SpawnTransform, SpawnParams))
+	{
+		ActiveWell = Well;
+		Well->AttachToActor(this, FAttachmentTransformRules::KeepWorldTransform);
+		Well->OnDestroyed.AddDynamic(this, &AGravityWellProjectile::HandleWellDestroyed);
+
+		bIsWhiteHole = bMakeWhite;
+	}
+}
