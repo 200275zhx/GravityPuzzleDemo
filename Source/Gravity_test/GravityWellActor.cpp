@@ -211,6 +211,13 @@ void AGravityWellActor::ApplyGravityTick()
                 {
                     if (ACharacter* Character = Cast<ACharacter>(OwningActor))
                     {
+                        // === New code for ruling out player character
+                        if (Character->IsPlayerControlled())
+                        {
+                            continue;
+                        }
+                        // === End ===
+
                         CurrentlyOverlappingCharacters.Add(Character);
 
                         if (!AffectedCharacters.Contains(Character))
