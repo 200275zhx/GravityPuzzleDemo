@@ -1,4 +1,4 @@
-#include "GravityWellWeapon.h"
+﻿#include "GravityWellWeapon.h"
 
 #include "GravityWellProjectile.h"
 
@@ -36,21 +36,23 @@ void AGravityWellWeapon::StopSecondaryFire()
 
 void AGravityWellWeapon::HandlePrimaryFire()
 {
-	const bool bHadFlyingProjectile = FlyingProjectile.IsValid();
-
-	if (AGravityWellProjectile* Existing = FlyingProjectile.Get())
+	// 1. Check if bullet flying
+	if (AGravityWellProjectile* Flying = FlyingProjectile.Get())
 	{
-		Existing->Destroy();
+		Flying->ActivateBlackHole();
+
+		if (bIsWhiteHoleMode)
+		{
+			Flying->SetPolarity(true);
+		}
+
 		FlyingProjectile.Reset();
-	}
-
-	if (!BlackHoleProjectileClass)
-	{
 		return;
 	}
 
+	// 2. If no bullet flying, check if can shoot new bullet
 	const float CurrentTime = GetWorld() ? GetWorld()->GetTimeSeconds() : 0.f;
-	if (!bHadFlyingProjectile && CurrentTime - LastShotTime < RefireRate)
+	if (CurrentTime - LastShotTime < RefireRate)
 	{
 		return;
 	}
@@ -59,7 +61,6 @@ void AGravityWellWeapon::HandlePrimaryFire()
 	{
 		FlyingProjectile = NewProjectile;
 		LastShotTime = CurrentTime;
-		TimeOfLastShot = CurrentTime;
 
 		if (PawnOwner)
 		{
@@ -70,28 +71,33 @@ void AGravityWellWeapon::HandlePrimaryFire()
 
 void AGravityWellWeapon::HandleSecondaryFire()
 {
-	if (AGravityWellProjectile* Flying = FlyingProjectile.Get())
-	{
-		ActivateFlyingProjectile();
-		return;
-	}
+	// 1. Change gun status
+	bIsWhiteHoleMode = !bIsWhiteHoleMode;
 
+	// 2. If black/white hole exists, change status
 	if (AGravityWellProjectile* ActiveHole = ActiveHoleProjectile.Get())
 	{
-		if (!ActiveHole->IsBlackHoleActive())
-		{
-			ActiveHoleProjectile.Reset();
-			return;
-		}
+		ActiveHole->TogglePolarity();
+	}
+	
+	/*
+	// === New: When bullet flying, change status ===
+	if (AGravityWellProjectile* Flying = FlyingProjectile.Get())
+	{
+		Flying->SetPendingPolarity(bIsWhiteHoleMode);
+	}
+	*/
 
-		if (!ActiveHole->IsWhiteHoleActive())
-		{
-			ActiveHole->TransformToWhiteHole();
-		}
-		else
-		{
-			ActiveHole->DeactivateBlackHole();
-		}
+	if (GEngine)
+	{
+		// 1. Text
+		FString ModeStr = bIsWhiteHoleMode ? TEXT("Current Mode: WHITE HOLE (Push)") : TEXT("Current Mode: BLACK HOLE (Pull)");
+
+		// 2. Print Text Color (Cyan for White hole; Purple for Black hole)
+		FColor TextColor = bIsWhiteHoleMode ? FColor::Cyan : FColor::Purple;
+
+		// 3. Print Screen
+		GEngine->AddOnScreenDebugMessage(10, 2.0f, TextColor, ModeStr);
 	}
 }
 
@@ -115,6 +121,9 @@ AGravityWellProjectile* AGravityWellWeapon::SpawnGravityProjectile()
 	AShooterProjectile* SpawnedProjectile = SpawnProjectileOfClass(TargetLocation, BlackHoleProjectileClass);
 	if (AGravityWellProjectile* GravityProjectile = Cast<AGravityWellProjectile>(SpawnedProjectile))
 	{
+		// === New: Message bullet the status of gun ===
+		GravityProjectile->SetPendingPolarity(bIsWhiteHoleMode);
+
 		BindProjectileDelegates(GravityProjectile);
 		return GravityProjectile;
 	}

@@ -47,4 +47,7 @@ private:
 	TWeakObjectPtr<AGravityWellProjectile> ActiveHoleProjectile;
 
 	float LastShotTime = -FLT_MAX;
+
+	// New: Gun Status
+	bool bIsWhiteHoleMode = false;
 };
